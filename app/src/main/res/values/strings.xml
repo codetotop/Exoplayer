@@ -1,0 +1,5 @@
+<resources>
+    <string name="app_name">Exoplayer</string>
+    <string name="offline">Hiện đang không có mạng. Vui lòng kiểm tra lại kết nối!</string>
+    <string name="occurred">Có lỗi xảy ra, vui lòng thử lại sau!</string>
+</resources>
