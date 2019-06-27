@@ -9,6 +9,7 @@ import android.text.TextUtils;
 import com.google.android.exoplayer2.C;
 import com.google.android.exoplayer2.ExoPlaybackException;
 import com.google.android.exoplayer2.ExoPlayerFactory;
+import com.google.android.exoplayer2.PlaybackParameters;
 import com.google.android.exoplayer2.Player;
 import com.google.android.exoplayer2.SimpleExoPlayer;
 import com.google.android.exoplayer2.extractor.DefaultExtractorsFactory;
@@ -17,10 +18,13 @@ import com.google.android.exoplayer2.source.MediaSource;
 import com.google.android.exoplayer2.source.dash.DashMediaSource;
 import com.google.android.exoplayer2.source.dash.DefaultDashChunkSource;
 import com.google.android.exoplayer2.source.hls.HlsMediaSource;
+import com.google.android.exoplayer2.text.Cue;
+import com.google.android.exoplayer2.text.TextOutput;
 import com.google.android.exoplayer2.trackselection.AdaptiveTrackSelection;
 import com.google.android.exoplayer2.trackselection.DefaultTrackSelector;
 import com.google.android.exoplayer2.trackselection.TrackSelection;
 import com.google.android.exoplayer2.ui.SimpleExoPlayerView;
+import com.google.android.exoplayer2.ui.SubtitleView;
 import com.google.android.exoplayer2.upstream.BandwidthMeter;
 import com.google.android.exoplayer2.upstream.DataSource;
 import com.google.android.exoplayer2.upstream.DefaultBandwidthMeter;
@@ -28,6 +32,8 @@ import com.google.android.exoplayer2.upstream.DefaultDataSourceFactory;
 import com.google.android.exoplayer2.upstream.DefaultHttpDataSourceFactory;
 import com.google.android.exoplayer2.upstream.HttpDataSource;
 import com.google.android.exoplayer2.util.Util;
+
+import java.util.List;
 
 public class VideoController {
   private static final DefaultBandwidthMeter BANDWIDTH_METER = new DefaultBandwidthMeter();
@@ -44,6 +50,8 @@ public class VideoController {
   private long mInitialPosition;
   private long mCurrentPosition;
   private OnVideoPlayerEventListener mListener;
+  private SubtitleView mSubtitles;
+
 
   private Handler mUpdateProgressHandler = new Handler();
   private Runnable mUpdateProgressTask = new Runnable() {
@@ -68,6 +76,13 @@ public class VideoController {
     init();
   }
 
+  public void setSpeed(float speed, float pitch) {
+    if (mVideoPlayer != null) {
+      PlaybackParameters param = new PlaybackParameters(speed, pitch);
+      mVideoPlayer.setPlaybackParameters(param);
+    }
+  }
+
   public void setVideoPlayerEventListener(OnVideoPlayerEventListener listener) {
     mListener = listener;
   }
@@ -80,16 +95,17 @@ public class VideoController {
     return mCurrentUrl;
   }
 
-  public void playVideo(String url, int initialPosition) {
+  public void playVideo(String url, int initialPosition, SubtitleView subtitles) {
     stop();
-    initVideoPlayer();
+    this.mSubtitles = subtitles;
+    initVideoPlayer(subtitles);
     mCurrentUrl = url;
     mInitialPosition = initialPosition;
     prepareVideo(url);
   }
 
-  public void playVideo(String currentUrl, String previousUrl, int initialPosition) {
-    playVideo(currentUrl, initialPosition);
+  public void playVideo(String currentUrl, String previousUrl, int initialPosition, SubtitleView subtitles) {
+    playVideo(currentUrl, initialPosition, subtitles);
   }
 
   public void startOver() {
@@ -109,7 +125,7 @@ public class VideoController {
       mVideoPlayer.release();
     }
 
-    initVideoPlayer();
+    initVideoPlayer(this.mSubtitles);
     prepareVideo(url);
   }
 
@@ -178,10 +194,17 @@ public class VideoController {
     mMediaDataSourceFactory = new DefaultDataSourceFactory(mContext, mUserAgent, (DefaultBandwidthMeter) bandwidthMeter);
   }
 
-  private void initVideoPlayer() {
+  private void initVideoPlayer(SubtitleView subtitles) {
     mVideoPlayer = ExoPlayerFactory.newSimpleInstance(mContext, mTrackSelector);
     mVideoView.setPlayer(mVideoPlayer);
 
+    mVideoPlayer.addTextOutput(new TextOutput() {
+      @Override
+      public void onCues(List<Cue> cues) {
+        if (subtitles != null)
+          subtitles.onCues(cues);
+      }
+    });
     mVideoPlayer.addListener(new Player.DefaultEventListener() {
       @Override
       public void onPlayerStateChanged(boolean playWhenReady, int playbackState) {
@@ -237,6 +260,35 @@ public class VideoController {
   }
 
   private MediaSource buildMediaSource(Uri uri, String overrideExtension) {
+
+    /*DefaultDataSourceFactory dataSourceFactory = new DefaultDataSourceFactory(mContext,
+        Util.getUserAgent(mContext, "exo-demo"));
+
+    MediaSource mediaSource[] = new MediaSource[2];
+
+    MediaSource contentMediaSource = new ExtractorMediaSource(uri, dataSourceFactory, new DefaultExtractorsFactory(),
+        mMainHandler, null);
+    mediaSource[0] = contentMediaSource;
+    // For subtitles
+    String srt_link = "/Users/gem/Documents/Demo/Exoplayer/app/src/main/java/com/gabriel/exoplayer/WebVTTExample.vtt";
+    *//*if ((srt_link == null || srt_link == "false" || srt_link.isEmpty())) {
+      return mediaSource;
+
+    }*//*
+
+    Uri uriSubtitle = Uri.parse(srt_link);
+    *//*Format textFormat = Format.createTextSampleFormat(null, MimeTypes.APPLICATION_SUBRIP,
+        Format.NO_VALUE, "hi");
+    MediaSource subtitleSource = new SingleSampleMediaSource(uriSubtitle, dataSourceFactory, textFormat, C.TIME_UNSET);*//*
+
+    SingleSampleMediaSource subtitleSource = new SingleSampleMediaSource(uriSubtitle, dataSourceFactory,
+        Format.createTextSampleFormat(null, MimeTypes.APPLICATION_SUBRIP, Format.NO_VALUE, "en", null),
+        C.TIME_UNSET);
+    mediaSource[1] = subtitleSource;
+
+    return new MergingMediaSource(mediaSource);*/
+
+
     int type = TextUtils.isEmpty(overrideExtension) ? Util.inferContentType(uri)
         : Util.inferContentType("." + overrideExtension);
     switch (type) {
@@ -252,6 +304,8 @@ public class VideoController {
         throw new IllegalStateException("Unsupported type: " + type);
       }
     }
+
+
   }
 
   private DataSource.Factory buildDataSourceFactory(boolean useBandwidthMeter) {

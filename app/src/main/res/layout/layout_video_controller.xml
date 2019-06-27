@@ -6,8 +6,47 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
+    <TextView
+        android:id="@+id/speedSlow"
+        android:layout_width="wrap_content"
+        android:layout_height="40dp"
+        android:layout_marginTop="20dp"
+        android:paddingEnd="15dp"
+        android:text="0.5x"
+        android:textColor="@android:color/white"
+        android:textSize="24dp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        tools:ignore="HardcodedText" />
+
+    <TextView
+        android:id="@+id/speedNormal"
+        android:layout_width="wrap_content"
+        android:layout_height="40dp"
+        android:layout_marginTop="10dp"
+        android:paddingEnd="15dp"
+        android:text="1.0x"
+        android:textColor="@android:color/white"
+        android:textSize="24dp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/speedSlow"
+        tools:ignore="HardcodedText" />
+
+    <TextView
+        android:id="@+id/speedFast"
+        android:layout_width="wrap_content"
+        android:layout_height="40dp"
+        android:layout_marginTop="10dp"
+        android:paddingEnd="15dp"
+        android:text="1.5x"
+        android:textColor="@android:color/white"
+        android:textSize="24dp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/speedNormal"
+        tools:ignore="HardcodedText" />
+
     <ImageButton
-        android:id="@id/exo_prev"
+        android:id="@+id/exo_prev1"
         style="@style/ExoMediaButton.Previous"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toStartOf="@+id/tag"
@@ -50,11 +89,21 @@
         app:layout_constraintTop_toTopOf="parent" />
 
     <ImageButton
-        android:id="@id/exo_next"
+        android:id="@+id/exo_next1"
         style="@style/ExoMediaButton.Next"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintStart_toEndOf="@+id/tag"
         app:layout_constraintTop_toTopOf="parent" />
+
+    <com.google.android.exoplayer2.ui.SubtitleView
+        android:id="@+id/subtitle"
+        android:layout_width="0dp"
+        android:layout_height="40dp"
+        app:layout_constraintBottom_toTopOf="@id/exo_progress"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintEnd_toStartOf="@id/exo_duration"
+        app:layout_constraintHorizontal_bias="1.0"
+        app:layout_constraintStart_toEndOf="@id/exo_position" />
 
     <com.google.android.exoplayer2.ui.DefaultTimeBar
         android:id="@id/exo_progress"
@@ -66,6 +115,7 @@
         app:layout_constraintRight_toRightOf="parent"
         app:played_color="@color/colorPrimaryDark"
         app:scrubber_color="@color/colorPrimaryDark" />
+
 
     <ImageView
         android:id="@+id/ivFullScreen"
@@ -85,7 +135,7 @@
         android:textColor="@color/white"
         android:textSize="13sp"
         app:layout_constraintBottom_toBottomOf="@id/ivFullScreen"
-        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="@id/ivFullScreen"
         tools:text="00:00" />
 

@@ -25,8 +25,8 @@
         android:layout_gravity="center"
         android:indeterminateDrawable="@drawable/loading_progress"
         app:layout_constraintBottom_toBottomOf="@id/simple_player_view"
-        app:layout_constraintLeft_toLeftOf="@id/simple_player_view"
-        app:layout_constraintRight_toRightOf="@id/simple_player_view"
+        app:layout_constraintEnd_toEndOf="@id/simple_player_view"
+        app:layout_constraintStart_toStartOf="@id/simple_player_view"
         app:layout_constraintTop_toTopOf="@id/simple_player_view" />
 
 </android.support.constraint.ConstraintLayout>

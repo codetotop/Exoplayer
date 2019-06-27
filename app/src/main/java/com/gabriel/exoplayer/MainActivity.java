@@ -10,9 +10,11 @@ import android.view.WindowManager;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.ProgressBar;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import com.google.android.exoplayer2.ui.SimpleExoPlayerView;
+import com.google.android.exoplayer2.ui.SubtitleView;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -27,6 +29,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
   private ProgressBar progressBar;
   private ImageView ivFullScreen;
   private ImageButton mExoPrev, mExoNext, mExoPlay, mExoPause, mExoReplay;
+  private TextView mTvSpeedSlow, mTvSpeedNormal, mTvSpeedFast;
+  private SubtitleView mSubtitles;
 
   private VideoController mExoController;
   private int mScreenMode = PORTRAIT;
@@ -43,7 +47,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
   }
 
   private void playingVideo() {
-    mExoController.playVideo(mLinks.get(mIndexVideo), 0);
+    mExoController.playVideo(mLinks.get(mIndexVideo), 0, mSubtitles);
   }
 
   private void addControlls() {
@@ -53,14 +57,20 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     ivFullScreen = findViewById(R.id.ivFullScreen);
     mExoPlay = findViewById(R.id.exo_play);
     mExoPause = findViewById(R.id.exo_pause);
-    mExoPrev = findViewById(R.id.exo_prev);
-    mExoNext = findViewById(R.id.exo_next);
+    mExoPrev = findViewById(R.id.exo_prev1);
+    mExoNext = findViewById(R.id.exo_next1);
     mExoReplay = findViewById(R.id.exo_replay);
+    mTvSpeedSlow = findViewById(R.id.speedSlow);
+    mTvSpeedNormal = findViewById(R.id.speedNormal);
+    mTvSpeedFast = findViewById(R.id.speedFast);
+    mSubtitles = findViewById(R.id.subtitle);
     mExoController = new VideoController(this, exoPlayer);
-
-
     mLinks.add("http://www.html5videoplayer.net/videos/toystory.mp4");
     mLinks.add("http://clips.vorwaerts-gmbh.de/big_buck_bunny.mp4");
+    mLinks.add("http://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4");
+    mLinks.add("http://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ElephantsDream.mp4");
+    mLinks.add("http://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerFun.mp4");
+    setUpControls();
   }
 
   private void addEvents() {
@@ -72,6 +82,9 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     mExoNext.setOnClickListener(this);
 
     mExoReplay.setOnClickListener(this);
+    mTvSpeedSlow.setOnClickListener(this);
+    mTvSpeedNormal.setOnClickListener(this);
+    mTvSpeedFast.setOnClickListener(this);
 
     mExoController.setVideoPlayerEventListener(new VideoController.OnVideoPlayerEventListener() {
       @Override
@@ -161,18 +174,56 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
       case R.id.ivFullScreen:
         setUpFullScreen();
         break;
-      case R.id.exo_next:
-        mIndexVideo = (mIndexVideo + mLinks.size()) / mLinks.size();
-      case R.id.exo_prev:
-        mIndexVideo = (mLinks.size() - mIndexVideo) / mLinks.size();
+      case R.id.exo_next1:
+        mIndexVideo++;
+        setUpControls();
+        mExoController.playVideo(mLinks.get(mIndexVideo), 0, mSubtitles);
+        break;
+      case R.id.exo_prev1:
+        mIndexVideo--;
+        setUpControls();
+        mExoController.playVideo(mLinks.get(mIndexVideo), 0, mSubtitles);
+        break;
       case R.id.exo_replay:
-        mExoController.playVideo(mLinks.get(mIndexVideo), 0);
+        mExoController.playVideo(mLinks.get(mIndexVideo), 0, mSubtitles);
+        break;
+      case R.id.speedSlow:
+        mExoController.setSpeed(0.5f, 0.5f);
+        break;
+      case R.id.speedNormal:
+        mExoController.setSpeed(1f, 1f);
+        break;
+      case R.id.speedFast:
+        mExoController.setSpeed(1.5f, 1.5f);
         break;
       default:
         break;
-
     }
 
+  }
+
+  private void setUpControls() {
+    if (mLinks.size() == 1) {
+      mExoPrev.setClickable(false);
+      mExoNext.setClickable(false);
+      mExoPrev.setVisibility(View.GONE);
+      mExoNext.setVisibility(View.GONE);
+    } else if (mIndexVideo == 0) {
+      mExoPrev.setClickable(false);
+      mExoNext.setClickable(true);
+      mExoPrev.setVisibility(View.GONE);
+      mExoNext.setVisibility(View.VISIBLE);
+    } else if (mIndexVideo == mLinks.size() - 1) {
+      mExoPrev.setClickable(true);
+      mExoNext.setClickable(false);
+      mExoPrev.setVisibility(View.VISIBLE);
+      mExoNext.setVisibility(View.GONE);
+    } else {
+      mExoPrev.setClickable(true);
+      mExoNext.setClickable(true);
+      mExoPrev.setVisibility(View.VISIBLE);
+      mExoNext.setVisibility(View.VISIBLE);
+    }
   }
 
 
