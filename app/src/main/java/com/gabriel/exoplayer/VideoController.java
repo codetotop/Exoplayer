@@ -1,5 +1,6 @@
 package com.gabriel.exoplayer;
 
+import android.annotation.SuppressLint;
 import android.content.Context;
 import android.media.session.PlaybackState;
 import android.net.Uri;
@@ -9,12 +10,15 @@ import android.text.TextUtils;
 import com.google.android.exoplayer2.C;
 import com.google.android.exoplayer2.ExoPlaybackException;
 import com.google.android.exoplayer2.ExoPlayerFactory;
+import com.google.android.exoplayer2.Format;
 import com.google.android.exoplayer2.PlaybackParameters;
 import com.google.android.exoplayer2.Player;
 import com.google.android.exoplayer2.SimpleExoPlayer;
 import com.google.android.exoplayer2.extractor.DefaultExtractorsFactory;
 import com.google.android.exoplayer2.source.ExtractorMediaSource;
 import com.google.android.exoplayer2.source.MediaSource;
+import com.google.android.exoplayer2.source.MergingMediaSource;
+import com.google.android.exoplayer2.source.SingleSampleMediaSource;
 import com.google.android.exoplayer2.source.dash.DashMediaSource;
 import com.google.android.exoplayer2.source.dash.DefaultDashChunkSource;
 import com.google.android.exoplayer2.source.hls.HlsMediaSource;
@@ -31,6 +35,7 @@ import com.google.android.exoplayer2.upstream.DefaultBandwidthMeter;
 import com.google.android.exoplayer2.upstream.DefaultDataSourceFactory;
 import com.google.android.exoplayer2.upstream.DefaultHttpDataSourceFactory;
 import com.google.android.exoplayer2.upstream.HttpDataSource;
+import com.google.android.exoplayer2.util.MimeTypes;
 import com.google.android.exoplayer2.util.Util;
 
 import java.util.List;
@@ -95,17 +100,17 @@ public class VideoController {
     return mCurrentUrl;
   }
 
-  public void playVideo(String url, int initialPosition, SubtitleView subtitles) {
+  public void playVideo(String videoURL, String subTitleURL, int initialPosition, SubtitleView subtitles) {
     stop();
     this.mSubtitles = subtitles;
-    initVideoPlayer(subtitles);
-    mCurrentUrl = url;
+    initVideoPlayer(this.mSubtitles);
+    mCurrentUrl = videoURL;
     mInitialPosition = initialPosition;
-    prepareVideo(url);
+    prepareVideo(videoURL, subTitleURL);
   }
 
-  public void playVideo(String currentUrl, String previousUrl, int initialPosition, SubtitleView subtitles) {
-    playVideo(currentUrl, initialPosition, subtitles);
+  public void playVideo(String currentUrl, String previousUrl, String subTitleURL, int initialPosition, SubtitleView subtitles) {
+    playVideo(currentUrl, subTitleURL, initialPosition, subtitles);
   }
 
   public void startOver() {
@@ -119,14 +124,14 @@ public class VideoController {
     }
   }
 
-  public void restart(String url) {
+  public void restart(String videoURL, String subTitleURL) {
     if (mVideoPlayer != null) {
       mVideoPlayer.stop();
       mVideoPlayer.release();
     }
 
     initVideoPlayer(this.mSubtitles);
-    prepareVideo(url);
+    prepareVideo(videoURL, subTitleURL);
   }
 
   public void resume() {
@@ -165,7 +170,7 @@ public class VideoController {
     }
   }
 
-  public void seekTo(int position) {
+  public void seekTo(long position) {
     if (mVideoPlayer != null) {
       mVideoPlayer.seekTo(position);
       mVideoPlayer.setPlayWhenReady(true);
@@ -194,10 +199,9 @@ public class VideoController {
     mMediaDataSourceFactory = new DefaultDataSourceFactory(mContext, mUserAgent, (DefaultBandwidthMeter) bandwidthMeter);
   }
 
+  @SuppressLint("ClickableViewAccessibility")
   private void initVideoPlayer(SubtitleView subtitles) {
     mVideoPlayer = ExoPlayerFactory.newSimpleInstance(mContext, mTrackSelector);
-    mVideoView.setPlayer(mVideoPlayer);
-
     mVideoPlayer.addTextOutput(new TextOutput() {
       @Override
       public void onCues(List<Cue> cues) {
@@ -246,48 +250,28 @@ public class VideoController {
         }
       }
     });
+
+    /*mVideoView.setOnTouchListener(new View.OnTouchListener() {
+      @Override
+      public boolean onTouch(View v, MotionEvent event) {
+        if (v.getId() == R.id.exo_play) {
+
+        }
+        return false;
+      }
+    });*/
+    mVideoView.setPlayer(mVideoPlayer);
   }
 
-  private void prepareVideo(String videoUrl) {
-    Uri uri = Uri.parse(videoUrl);
-    MediaSource mediaSource;
-    mediaSource = buildMediaSource(uri, "");
+  private void prepareVideo(String videoURL, String subTitleURL) {
+    MediaSource mediaSource = buildMediaSourceSubTitle(videoURL, subTitleURL, "");
     mVideoPlayer.prepare(mediaSource);
     if (mInitialPosition > 0)
       mVideoPlayer.seekTo(mInitialPosition);
     mVideoPlayer.setPlayWhenReady(true);
-
   }
 
-  private MediaSource buildMediaSource(Uri uri, String overrideExtension) {
-
-    /*DefaultDataSourceFactory dataSourceFactory = new DefaultDataSourceFactory(mContext,
-        Util.getUserAgent(mContext, "exo-demo"));
-
-    MediaSource mediaSource[] = new MediaSource[2];
-
-    MediaSource contentMediaSource = new ExtractorMediaSource(uri, dataSourceFactory, new DefaultExtractorsFactory(),
-        mMainHandler, null);
-    mediaSource[0] = contentMediaSource;
-    // For subtitles
-    String srt_link = "/Users/gem/Documents/Demo/Exoplayer/app/src/main/java/com/gabriel/exoplayer/WebVTTExample.vtt";
-    *//*if ((srt_link == null || srt_link == "false" || srt_link.isEmpty())) {
-      return mediaSource;
-
-    }*//*
-
-    Uri uriSubtitle = Uri.parse(srt_link);
-    *//*Format textFormat = Format.createTextSampleFormat(null, MimeTypes.APPLICATION_SUBRIP,
-        Format.NO_VALUE, "hi");
-    MediaSource subtitleSource = new SingleSampleMediaSource(uriSubtitle, dataSourceFactory, textFormat, C.TIME_UNSET);*//*
-
-    SingleSampleMediaSource subtitleSource = new SingleSampleMediaSource(uriSubtitle, dataSourceFactory,
-        Format.createTextSampleFormat(null, MimeTypes.APPLICATION_SUBRIP, Format.NO_VALUE, "en", null),
-        C.TIME_UNSET);
-    mediaSource[1] = subtitleSource;
-
-    return new MergingMediaSource(mediaSource);*/
-
+  private MediaSource buildMediaSourceNoSubtitle(Uri uri, String overrideExtension) {
 
     int type = TextUtils.isEmpty(overrideExtension) ? Util.inferContentType(uri)
         : Util.inferContentType("." + overrideExtension);
@@ -305,7 +289,51 @@ public class VideoController {
       }
     }
 
+  }
 
+
+  private MediaSource buildMediaSourceSubTitle(String videoURL, String subTitleURL, String overrideExtension) {
+    MediaSource mediaSources[] = new MediaSource[2];
+
+    // For Video
+    Uri videoURI = Uri.parse(videoURL);
+    MediaSource contentMediaSource;
+
+    int type = TextUtils.isEmpty(overrideExtension) ? Util.inferContentType(videoURI)
+        : Util.inferContentType("." + overrideExtension);
+
+    switch (type) {
+      case C.TYPE_DASH:
+        contentMediaSource = new DashMediaSource(videoURI, buildDataSourceFactory(false),
+            new DefaultDashChunkSource.Factory(mMediaDataSourceFactory), mMainHandler, null);
+        mediaSources[0] = contentMediaSource;
+        break;
+      case C.TYPE_HLS:
+        contentMediaSource = new HlsMediaSource(videoURI, mMediaDataSourceFactory, mMainHandler, null);
+        mediaSources[0] = contentMediaSource;
+        break;
+      case C.TYPE_OTHER:
+        contentMediaSource = new ExtractorMediaSource(videoURI, mMediaDataSourceFactory, new DefaultExtractorsFactory(),
+            mMainHandler, null);
+        mediaSources[0] = contentMediaSource;
+        break;
+      default: {
+        throw new IllegalStateException("Unsupported type: " + type);
+      }
+    }
+
+    // For subtitles
+    if ((subTitleURL == null || subTitleURL.isEmpty())) {
+      return contentMediaSource;
+    }
+    Uri subTitleURI = Uri.parse(subTitleURL);
+
+    SingleSampleMediaSource subtitleSource = new SingleSampleMediaSource(subTitleURI, mMediaDataSourceFactory,
+        Format.createTextSampleFormat("id", MimeTypes.TEXT_VTT, Format.NO_VALUE, "en", null),
+        C.TIME_UNSET);
+    mediaSources[1] = subtitleSource;
+
+    return new MergingMediaSource(mediaSources);
   }
 
   private DataSource.Factory buildDataSourceFactory(boolean useBandwidthMeter) {

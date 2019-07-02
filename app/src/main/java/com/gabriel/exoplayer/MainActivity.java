@@ -1,15 +1,26 @@
 package com.gabriel.exoplayer;
 
+import android.app.NotificationChannel;
+import android.app.NotificationManager;
+import android.content.Context;
 import android.content.pm.ActivityInfo;
 import android.content.res.Configuration;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.os.Build;
 import android.os.Bundle;
 import android.support.constraint.ConstraintLayout;
+import android.support.v4.app.NotificationCompat;
+import android.support.v4.media.app.NotificationCompat.MediaStyle;
+import android.support.v4.media.session.MediaButtonReceiver;
+import android.support.v4.media.session.PlaybackStateCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.view.View;
 import android.view.WindowManager;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.ProgressBar;
+import android.widget.SeekBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -28,14 +39,16 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
   private SimpleExoPlayerView exoPlayer;
   private ProgressBar progressBar;
   private ImageView ivFullScreen;
-  private ImageButton mExoPrev, mExoNext, mExoPlay, mExoPause, mExoReplay;
-  private TextView mTvSpeedSlow, mTvSpeedNormal, mTvSpeedFast;
+  private static final String CHANNEL_ID = "Gabriel";
+  private SeekBar mSbSpeed;
   private SubtitleView mSubtitles;
-
+  private ImageButton mExoPrev, mExoNext, mExoPlay, mExoPause, mExoReplay, mExoReplay10, mExoForward10;
   private VideoController mExoController;
   private int mScreenMode = PORTRAIT;
   private List<String> mLinks = new ArrayList<>();
   private int mIndexVideo = 0;
+  private TextView mTvSpeed;
+  private String subTitleURL = "https://www.iandevlin.com/html5test/webvtt/upc-video-subtitles-en.vtt";
 
   @Override
   protected void onCreate(Bundle savedInstanceState) {
@@ -47,7 +60,41 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
   }
 
   private void playingVideo() {
-    mExoController.playVideo(mLinks.get(mIndexVideo), 0, mSubtitles);
+    mExoController.playVideo(mLinks.get(mIndexVideo), subTitleURL, 0, mSubtitles);
+    //createNotification();
+  }
+
+  private void createNotification() {
+    Bitmap lagreIcon = BitmapFactory.decodeResource(getResources(), R.drawable.ic_smile);
+    NotificationCompat.Builder builder = new NotificationCompat.Builder(this, CHANNEL_ID)
+        .setSmallIcon(R.drawable.ic_smile)
+        .setContentTitle("Gabriel")
+        .setContentText("Gabriel !")
+        .setLargeIcon(lagreIcon)
+        .addAction(new NotificationCompat.Action(R.drawable.ic_previous, "previous", null))
+        .addAction(new NotificationCompat.Action(R.drawable.ic_pause, "pause play", null))
+        .addAction(new NotificationCompat.Action(R.drawable.ic_next, "next", null))
+        .setStyle(new MediaStyle()
+            .setShowActionsInCompactView(0, 1, 2)
+            .setShowCancelButton(true)
+            .setCancelButtonIntent(MediaButtonReceiver.buildMediaButtonPendingIntent(MainActivity.this, PlaybackStateCompat.ACTION_STOP)))
+        .setPriority(NotificationCompat.PRIORITY_DEFAULT);
+
+    NotificationManager notificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+    createNotificationChannel(notificationManager);
+
+    notificationManager.notify(6, builder.build());
+  }
+
+  private void createNotificationChannel(NotificationManager notificationManager) {
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+      CharSequence name = getString(R.string.channel_name);
+      String description = getString(R.string.channel_description);
+      int importance = NotificationManager.IMPORTANCE_DEFAULT;
+      NotificationChannel channel = new NotificationChannel(CHANNEL_ID, name, importance);
+      channel.setDescription(description);
+      notificationManager.createNotificationChannel(channel);
+    }
   }
 
   private void addControlls() {
@@ -55,37 +102,55 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     exoPlayer = findViewById(R.id.simple_player_view);
     progressBar = findViewById(R.id.common_progress_bar);
     ivFullScreen = findViewById(R.id.ivFullScreen);
-    mExoPlay = findViewById(R.id.exo_play);
-    mExoPause = findViewById(R.id.exo_pause);
+    mExoPlay = findViewById(R.id.exo_play1);
+    mExoPause = findViewById(R.id.exo_pause1);
     mExoPrev = findViewById(R.id.exo_prev1);
     mExoNext = findViewById(R.id.exo_next1);
     mExoReplay = findViewById(R.id.exo_replay);
-    mTvSpeedSlow = findViewById(R.id.speedSlow);
-    mTvSpeedNormal = findViewById(R.id.speedNormal);
-    mTvSpeedFast = findViewById(R.id.speedFast);
+    mExoReplay10 = findViewById(R.id.exo_replay_10);
+    mExoForward10 = findViewById(R.id.exo_forward_10);
     mSubtitles = findViewById(R.id.subtitle);
+    mSbSpeed = findViewById(R.id.sbSpeed);
+    mTvSpeed = findViewById(R.id.tvSpeed);
     mExoController = new VideoController(this, exoPlayer);
     mLinks.add("http://www.html5videoplayer.net/videos/toystory.mp4");
     mLinks.add("http://clips.vorwaerts-gmbh.de/big_buck_bunny.mp4");
     mLinks.add("http://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4");
     mLinks.add("http://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ElephantsDream.mp4");
     mLinks.add("http://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerFun.mp4");
-    setUpControls();
+    //setUpControls();
+    setUpVisibilityPausePlay(View.GONE, View.VISIBLE);
   }
 
   private void addEvents() {
 
     ivFullScreen.setOnClickListener(this);
-
     mExoPrev.setOnClickListener(this);
-
     mExoNext.setOnClickListener(this);
-
+    mExoPlay.setOnClickListener(this);
+    mExoPause.setOnClickListener(this);
     mExoReplay.setOnClickListener(this);
-    mTvSpeedSlow.setOnClickListener(this);
-    mTvSpeedNormal.setOnClickListener(this);
-    mTvSpeedFast.setOnClickListener(this);
+    mExoReplay10.setOnClickListener(this);
+    mExoForward10.setOnClickListener(this);
+    mSbSpeed.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+      @Override
+      public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
+        float speed = progress / 100f;
+        if (speed < 0.5)
+          speed = 0.5f;
+        mTvSpeed.setText("x" + speed);
+      }
 
+      @Override
+      public void onStartTrackingTouch(SeekBar seekBar) {
+
+      }
+
+      @Override
+      public void onStopTrackingTouch(SeekBar seekBar) {
+
+      }
+    });
     mExoController.setVideoPlayerEventListener(new VideoController.OnVideoPlayerEventListener() {
       @Override
       public void onProgressChanged(int progress, int duration) {
@@ -100,7 +165,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
       @Override
       public void onPlayerBuffering() {
         progressBar.setVisibility(View.VISIBLE);
-        mExoReplay.setVisibility(View.GONE);
+        mExoReplay.setVisibility(View.INVISIBLE);
       }
 
       @Override
@@ -111,6 +176,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
       @Override
       public void onPlayerPause() {
         // Do nothing
+        progressBar.setVisibility(View.GONE);
       }
 
       @Override
@@ -171,35 +237,54 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
   @Override
   public void onClick(View v) {
     switch (v.getId()) {
+      case R.id.exo_play1:
+        setUpVisibilityPausePlay(View.GONE, View.VISIBLE);
+        mExoController.resume();
+        break;
+      case R.id.exo_pause1:
+        setUpVisibilityPausePlay(View.VISIBLE, View.GONE);
+        mExoController.pause();
+        break;
       case R.id.ivFullScreen:
         setUpFullScreen();
         break;
       case R.id.exo_next1:
         mIndexVideo++;
-        setUpControls();
-        mExoController.playVideo(mLinks.get(mIndexVideo), 0, mSubtitles);
+        //setUpControls();
+        playingVideo();
         break;
       case R.id.exo_prev1:
         mIndexVideo--;
-        setUpControls();
-        mExoController.playVideo(mLinks.get(mIndexVideo), 0, mSubtitles);
+        //setUpControls();
+        playingVideo();
         break;
       case R.id.exo_replay:
-        mExoController.playVideo(mLinks.get(mIndexVideo), 0, mSubtitles);
+        setUpVisibilityPausePlay(View.GONE, View.VISIBLE);
+        mExoController.restart(mLinks.get(mIndexVideo), subTitleURL);
         break;
-      case R.id.speedSlow:
-        mExoController.setSpeed(0.5f, 0.5f);
+      case R.id.exo_replay_10:
+        setUpVisibilityPausePlay(View.GONE, View.VISIBLE);
+        if (mExoController.getCurrentPosition() >= 10000)
+          mExoController.seekTo(mExoController.getCurrentPosition() - 10000);
+        else
+          mExoController.seekTo(0);
         break;
-      case R.id.speedNormal:
-        mExoController.setSpeed(1f, 1f);
-        break;
-      case R.id.speedFast:
-        mExoController.setSpeed(1.5f, 1.5f);
+      case R.id.exo_forward_10:
+        setUpVisibilityPausePlay(View.GONE, View.VISIBLE);
+        if (mExoController.getCurrentPosition() <= mExoController.getDuration() - 10000)
+          mExoController.seekTo(mExoController.getCurrentPosition() + 10000);
+        else
+          mExoController.seekTo(mExoController.getDuration());
         break;
       default:
         break;
     }
 
+  }
+
+  private void setUpVisibilityPausePlay(int play, int pause) {
+    mExoPlay.setVisibility(play);
+    mExoPause.setVisibility(pause);
   }
 
   private void setUpControls() {

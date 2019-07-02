@@ -35,4 +35,7 @@ dependencies {
     implementation "com.google.android.exoplayer:exoplayer-dash:${rootProject.ext.exoPlayerVersion}"
     implementation "com.google.android.exoplayer:exoplayer-ui:${rootProject.ext.exoPlayerVersion}"
     implementation "com.google.android.exoplayer:extension-ima:${rootProject.ext.exoPlayerVersion}"
+    implementation "com.android.support:support-compat:28.0.0"
+    implementation "com.android.support:support-media-compat:28.0.0"
+
 }
