@@ -56,6 +56,7 @@ public class VideoController {
   private long mCurrentPosition;
   private OnVideoPlayerEventListener mListener;
   private SubtitleView mSubtitles;
+  private boolean isPlay;
 
 
   private Handler mUpdateProgressHandler = new Handler();
@@ -225,16 +226,23 @@ public class VideoController {
                 mListener.onPlayerPlay();
               }
             } else {
-              mUpdateProgressHandler.removeCallbacks(mUpdateProgressTask);
-              if (mListener != null) {
-                mListener.onPlayerPause();
+              if (isPlay == true) {
+                mUpdateProgressHandler.post(mUpdateProgressTask);
+                if (mListener != null) {
+                  mListener.onPlayerPlay();
+                }
+              } else {
+                mUpdateProgressHandler.removeCallbacks(mUpdateProgressTask);
+                if (mListener != null) {
+                  mListener.onPlayerPause();
+                }
               }
             }
             break;
           case Player.STATE_ENDED:
             if (playWhenReady) {
               mUpdateProgressHandler.removeCallbacks(mUpdateProgressTask);
-              mVideoPlayer.setPlayWhenReady(false);
+              //mVideoPlayer.setPlayWhenReady(false);
               if (mListener != null) {
                 mListener.onPlayerFinish();
               }
@@ -351,6 +359,14 @@ public class VideoController {
 
   private HttpDataSource.Factory buildHttpDataSourceFactory(DefaultBandwidthMeter bandwidthMeter) {
     return new DefaultHttpDataSourceFactory(mUserAgent, bandwidthMeter);
+  }
+
+  public boolean isPlay() {
+    return isPlay;
+  }
+
+  public void setPlay(boolean play) {
+    isPlay = play;
   }
 
   public interface OnVideoPlayerEventListener {

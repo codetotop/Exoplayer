@@ -27,6 +27,7 @@ import android.widget.Toast;
 import com.google.android.exoplayer2.ui.SimpleExoPlayerView;
 import com.google.android.exoplayer2.ui.SubtitleView;
 
+import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -47,7 +48,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
   private int mScreenMode = PORTRAIT;
   private List<String> mLinks = new ArrayList<>();
   private int mIndexVideo = 0;
-  private TextView mTvSpeed;
+  private TextView mTvSpeed1, mTvSpeed2;
+  private ConstraintLayout mContainerSpeed;
   private String subTitleURL = "https://www.iandevlin.com/html5test/webvtt/upc-video-subtitles-en.vtt";
 
   @Override
@@ -111,15 +113,19 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     mExoForward10 = findViewById(R.id.exo_forward_10);
     mSubtitles = findViewById(R.id.subtitle);
     mSbSpeed = findViewById(R.id.sbSpeed);
-    mTvSpeed = findViewById(R.id.tvSpeed);
-    mExoController = new VideoController(this, exoPlayer);
-    mLinks.add("http://www.html5videoplayer.net/videos/toystory.mp4");
-    mLinks.add("http://clips.vorwaerts-gmbh.de/big_buck_bunny.mp4");
-    mLinks.add("http://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4");
+    mTvSpeed1 = findViewById(R.id.tvSpeed1);
+    mTvSpeed2 = findViewById(R.id.tvSpeed2);
+    mContainerSpeed = findViewById(R.id.containerSpeed);
+    //mLinks.add("http://edge-token-download-plldsigb.bbt757.com.edgesuite.net/mp4/224k/29333_224k.mp4?strtoken=1562129148_f0bcb9bdddab606a1af3e86535cbb2ba&ext=da39a3ee5e6b4b0d3255bfef95601890afd80709");
+    //mLinks.add("http://clips.vorwaerts-gmbh.de/big_buck_bunny.mp4");
+    //mLinks.add("http://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4");
     mLinks.add("http://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ElephantsDream.mp4");
     mLinks.add("http://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerFun.mp4");
     //setUpControls();
-    setUpVisibilityPausePlay(View.GONE, View.VISIBLE);
+    mTvSpeed1.setText(getResources().getString(R.string.speed_default));
+    mTvSpeed2.setText(getResources().getString(R.string.speed_default));
+    setUpVisibilityPausePlay(View.INVISIBLE, View.VISIBLE, View.INVISIBLE);
+    mExoController = new VideoController(this, exoPlayer);
   }
 
   private void addEvents() {
@@ -132,12 +138,15 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     mExoReplay.setOnClickListener(this);
     mExoReplay10.setOnClickListener(this);
     mExoForward10.setOnClickListener(this);
+    mTvSpeed1.setOnClickListener(this);
     mSbSpeed.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
       @Override
       public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
         float speed = progress / 100f;
         speed += 0.5f;
-        mTvSpeed.setText("x" + speed);
+        DecimalFormat format = new DecimalFormat("#.#");
+        mTvSpeed1.setText("x" + format.format(speed));
+        mTvSpeed2.setText("x" + format.format(speed));
       }
 
       @Override
@@ -147,7 +156,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
       @Override
       public void onStopTrackingTouch(SeekBar seekBar) {
-
+        mContainerSpeed.setVisibility(View.GONE);
       }
     });
     mExoController.setVideoPlayerEventListener(new VideoController.OnVideoPlayerEventListener() {
@@ -164,7 +173,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
       @Override
       public void onPlayerBuffering() {
         progressBar.setVisibility(View.VISIBLE);
-        mExoReplay.setVisibility(View.INVISIBLE);
+
       }
 
       @Override
@@ -176,13 +185,15 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
       public void onPlayerPause() {
         // Do nothing
         progressBar.setVisibility(View.GONE);
+
       }
 
       @Override
       public void onPlayerFinish() {
-        mExoReplay.setVisibility(View.VISIBLE);
-        mExoPause.setVisibility(View.GONE);
-        mExoPlay.setVisibility(View.GONE);
+        setUpVisibilityPausePlay(View.INVISIBLE, View.INVISIBLE, View.VISIBLE);
+        /*mExoReplay.setVisibility(View.VISIBLE);
+        mExoPause.setVisibility(View.INVISIBLE);
+        mExoPlay.setVisibility(View.INVISIBLE);*/
         // Do nothing
       }
 
@@ -237,11 +248,11 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
   public void onClick(View v) {
     switch (v.getId()) {
       case R.id.exo_play1:
-        setUpVisibilityPausePlay(View.GONE, View.VISIBLE);
+        setUpVisibilityPausePlay(View.INVISIBLE, View.VISIBLE, View.INVISIBLE);
         mExoController.resume();
         break;
       case R.id.exo_pause1:
-        setUpVisibilityPausePlay(View.VISIBLE, View.GONE);
+        setUpVisibilityPausePlay(View.VISIBLE, View.INVISIBLE, View.INVISIBLE);
         mExoController.pause();
         break;
       case R.id.ivFullScreen:
@@ -249,31 +260,36 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         break;
       case R.id.exo_next1:
         mIndexVideo++;
-        //setUpControls();
         playingVideo();
         break;
       case R.id.exo_prev1:
         mIndexVideo--;
-        //setUpControls();
         playingVideo();
         break;
       case R.id.exo_replay:
-        setUpVisibilityPausePlay(View.GONE, View.VISIBLE);
+        setUpVisibilityPausePlay(View.INVISIBLE, View.VISIBLE, View.INVISIBLE);
         mExoController.restart(mLinks.get(mIndexVideo), subTitleURL);
         break;
       case R.id.exo_replay_10:
-        setUpVisibilityPausePlay(View.GONE, View.VISIBLE);
-        if (mExoController.getCurrentPosition() >= 10000)
+
+        if (mExoController.getCurrentPosition() > 10000) {
           mExoController.seekTo(mExoController.getCurrentPosition() - 10000);
-        else
+        } else {
           mExoController.seekTo(0);
+        }
+        setUpVisibilityPausePlay(View.INVISIBLE, View.VISIBLE, View.INVISIBLE);
         break;
       case R.id.exo_forward_10:
-        setUpVisibilityPausePlay(View.GONE, View.VISIBLE);
-        if (mExoController.getCurrentPosition() <= mExoController.getDuration() - 10000)
+        if (mExoController.getCurrentPosition() < mExoController.getDuration() - 10000) {
           mExoController.seekTo(mExoController.getCurrentPosition() + 10000);
-        else
+          setUpVisibilityPausePlay(View.INVISIBLE, View.VISIBLE, View.INVISIBLE);
+        } else {
           mExoController.seekTo(mExoController.getDuration());
+          setUpVisibilityPausePlay(View.INVISIBLE, View.INVISIBLE, View.VISIBLE);
+        }
+        break;
+      case R.id.tvSpeed1:
+        mContainerSpeed.setVisibility(View.VISIBLE);
         break;
       default:
         break;
@@ -281,35 +297,11 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
   }
 
-  private void setUpVisibilityPausePlay(int play, int pause) {
+  private void setUpVisibilityPausePlay(int play, int pause, int replay) {
     mExoPlay.setVisibility(play);
     mExoPause.setVisibility(pause);
+    mExoReplay.setVisibility(replay);
   }
-
-  private void setUpControls() {
-    if (mLinks.size() == 1) {
-      mExoPrev.setClickable(false);
-      mExoNext.setClickable(false);
-      mExoPrev.setVisibility(View.GONE);
-      mExoNext.setVisibility(View.GONE);
-    } else if (mIndexVideo == 0) {
-      mExoPrev.setClickable(false);
-      mExoNext.setClickable(true);
-      mExoPrev.setVisibility(View.GONE);
-      mExoNext.setVisibility(View.VISIBLE);
-    } else if (mIndexVideo == mLinks.size() - 1) {
-      mExoPrev.setClickable(true);
-      mExoNext.setClickable(false);
-      mExoPrev.setVisibility(View.VISIBLE);
-      mExoNext.setVisibility(View.GONE);
-    } else {
-      mExoPrev.setClickable(true);
-      mExoNext.setClickable(true);
-      mExoPrev.setVisibility(View.VISIBLE);
-      mExoNext.setVisibility(View.VISIBLE);
-    }
-  }
-
 
   private void setUpFullScreen() {
     if (mScreenMode == LANDSCAPE) {
