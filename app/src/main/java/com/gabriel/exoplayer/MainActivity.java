@@ -147,6 +147,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         DecimalFormat format = new DecimalFormat("#.#");
         mTvSpeed1.setText("x" + format.format(speed));
         mTvSpeed2.setText("x" + format.format(speed));
+        mExoController.setSpeed(speed, speed);
       }
 
       @Override
