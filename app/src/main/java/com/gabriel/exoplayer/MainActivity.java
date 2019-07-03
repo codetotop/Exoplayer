@@ -136,8 +136,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
       @Override
       public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
         float speed = progress / 100f;
-        if (speed < 0.5)
-          speed = 0.5f;
+        speed += 0.5f;
         mTvSpeed.setText("x" + speed);
       }
 
