@@ -1,19 +1,11 @@
 package com.gabriel.exoplayer;
 
-import android.app.NotificationChannel;
-import android.app.NotificationManager;
-import android.content.Context;
+import android.annotation.SuppressLint;
+import android.content.IntentFilter;
 import android.content.pm.ActivityInfo;
 import android.content.res.Configuration;
-import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
-import android.os.Build;
 import android.os.Bundle;
 import android.support.constraint.ConstraintLayout;
-import android.support.v4.app.NotificationCompat;
-import android.support.v4.media.app.NotificationCompat.MediaStyle;
-import android.support.v4.media.session.MediaButtonReceiver;
-import android.support.v4.media.session.PlaybackStateCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.view.View;
 import android.view.WindowManager;
@@ -31,7 +23,7 @@ import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.List;
 
-public class MainActivity extends AppCompatActivity implements View.OnClickListener {
+public class MainActivity extends AppCompatActivity implements View.OnClickListener, NotificationReceiver.NotificationListener {
 
   private static final int LANDSCAPE = 0;
   private static final int PORTRAIT = 1;
@@ -40,7 +32,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
   private SimpleExoPlayerView exoPlayer;
   private ProgressBar progressBar;
   private ImageView ivFullScreen;
-  private static final String CHANNEL_ID = "Gabriel";
+  public static final String CHANNEL_ID = "Gabriel";
   private SeekBar mSbSpeed;
   private SubtitleView mSubtitles;
   private ImageButton mExoPrev, mExoNext, mExoPlay, mExoPause, mExoReplay, mExoReplay10, mExoForward10;
@@ -50,12 +42,16 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
   private int mIndexVideo = 0;
   private TextView mTvSpeed1, mTvSpeed2;
   private ConstraintLayout mContainerSpeed;
+  NotificationUtils mNotificationUtils;
   private String subTitleURL = "https://www.iandevlin.com/html5test/webvtt/upc-video-subtitles-en.vtt";
+  private ConstraintLayout mPlaybackContainer;
 
   @Override
   protected void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
     setContentView(R.layout.activity_main);
+    NotificationReceiver receiver = new NotificationReceiver(this);
+    registerReceiver(receiver, new IntentFilter());
     addControlls();
     addEvents();
     playingVideo();
@@ -63,41 +59,10 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
   private void playingVideo() {
     mExoController.playVideo(mLinks.get(mIndexVideo), subTitleURL, 0, mSubtitles);
-    //createNotification();
+    mNotificationUtils = new NotificationUtils(this);
+    mNotificationUtils.createMediaCustomNotification(CHANNEL_ID);
   }
 
-  private void createNotification() {
-    Bitmap lagreIcon = BitmapFactory.decodeResource(getResources(), R.drawable.ic_smile);
-    NotificationCompat.Builder builder = new NotificationCompat.Builder(this, CHANNEL_ID)
-        .setSmallIcon(R.drawable.ic_smile)
-        .setContentTitle("Gabriel")
-        .setContentText("Gabriel !")
-        .setLargeIcon(lagreIcon)
-        .addAction(new NotificationCompat.Action(R.drawable.ic_previous, "previous", null))
-        .addAction(new NotificationCompat.Action(R.drawable.ic_pause, "pause play", null))
-        .addAction(new NotificationCompat.Action(R.drawable.ic_next, "next", null))
-        .setStyle(new MediaStyle()
-            .setShowActionsInCompactView(0, 1, 2)
-            .setShowCancelButton(true)
-            .setCancelButtonIntent(MediaButtonReceiver.buildMediaButtonPendingIntent(MainActivity.this, PlaybackStateCompat.ACTION_STOP)))
-        .setPriority(NotificationCompat.PRIORITY_DEFAULT);
-
-    NotificationManager notificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
-    createNotificationChannel(notificationManager);
-
-    notificationManager.notify(6, builder.build());
-  }
-
-  private void createNotificationChannel(NotificationManager notificationManager) {
-    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-      CharSequence name = getString(R.string.channel_name);
-      String description = getString(R.string.channel_description);
-      int importance = NotificationManager.IMPORTANCE_DEFAULT;
-      NotificationChannel channel = new NotificationChannel(CHANNEL_ID, name, importance);
-      channel.setDescription(description);
-      notificationManager.createNotificationChannel(channel);
-    }
-  }
 
   private void addControlls() {
     rootPlayer = findViewById(R.id.fl_player_view);
@@ -116,6 +81,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     mTvSpeed1 = findViewById(R.id.tvSpeed1);
     mTvSpeed2 = findViewById(R.id.tvSpeed2);
     mContainerSpeed = findViewById(R.id.containerSpeed);
+    mPlaybackContainer = findViewById(R.id.playbackContainer);
     //mLinks.add("http://edge-token-download-plldsigb.bbt757.com.edgesuite.net/mp4/224k/29333_224k.mp4?strtoken=1562129148_f0bcb9bdddab606a1af3e86535cbb2ba&ext=da39a3ee5e6b4b0d3255bfef95601890afd80709");
     //mLinks.add("http://clips.vorwaerts-gmbh.de/big_buck_bunny.mp4");
     //mLinks.add("http://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4");
@@ -128,6 +94,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     mExoController = new VideoController(this, exoPlayer);
   }
 
+  @SuppressLint("ClickableViewAccessibility")
   private void addEvents() {
 
     ivFullScreen.setOnClickListener(this);
@@ -139,6 +106,10 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     mExoReplay10.setOnClickListener(this);
     mExoForward10.setOnClickListener(this);
     mTvSpeed1.setOnClickListener(this);
+    mPlaybackContainer.setOnTouchListener((v, event) -> {
+      mContainerSpeed.setVisibility(View.GONE);
+      return false;
+    });
     mSbSpeed.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
       @Override
       public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
@@ -186,16 +157,11 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
       public void onPlayerPause() {
         // Do nothing
         progressBar.setVisibility(View.GONE);
-
       }
 
       @Override
       public void onPlayerFinish() {
         setUpVisibilityPausePlay(View.INVISIBLE, View.INVISIBLE, View.VISIBLE);
-        /*mExoReplay.setVisibility(View.VISIBLE);
-        mExoPause.setVisibility(View.INVISIBLE);
-        mExoPlay.setVisibility(View.INVISIBLE);*/
-        // Do nothing
       }
 
       @Override
@@ -311,6 +277,15 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     } else {
       MainActivity.this.setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE);
       mScreenMode = LANDSCAPE;
+    }
+  }
+
+  @Override
+  public void onPausePlay() {
+    if (mExoController.isPlaying()) {
+      mExoController.pause();
+    } else {
+      mExoController.resume();
     }
   }
 }

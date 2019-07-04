@@ -6,6 +6,8 @@ import android.media.session.PlaybackState;
 import android.net.Uri;
 import android.os.Handler;
 import android.text.TextUtils;
+import android.view.MotionEvent;
+import android.view.View;
 
 import com.google.android.exoplayer2.C;
 import com.google.android.exoplayer2.ExoPlaybackException;
@@ -259,15 +261,15 @@ public class VideoController {
       }
     });
 
-    /*mVideoView.setOnTouchListener(new View.OnTouchListener() {
+    mVideoView.setOnTouchListener(new View.OnTouchListener() {
       @Override
       public boolean onTouch(View v, MotionEvent event) {
-        if (v.getId() == R.id.exo_play) {
+        if (v.getId() == R.id.playbackContainer) {
 
         }
         return false;
       }
-    });*/
+    });
     mVideoView.setPlayer(mVideoPlayer);
   }
 

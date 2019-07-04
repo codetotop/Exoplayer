@@ -37,5 +37,5 @@ dependencies {
     implementation "com.google.android.exoplayer:extension-ima:${rootProject.ext.exoPlayerVersion}"
     implementation "com.android.support:support-compat:28.0.0"
     implementation "com.android.support:support-media-compat:28.0.0"
-
+    implementation 'com.facebook.fresco:fresco:1.10.0'
 }
