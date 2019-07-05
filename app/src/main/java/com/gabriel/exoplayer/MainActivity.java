@@ -47,6 +47,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
   private String subTitleURL = "https://www.iandevlin.com/html5test/webvtt/upc-video-subtitles-en.vtt";
   private ConstraintLayout mPlaybackContainer;
   private NotificationReceiver mNotificationReceiver;
+  private boolean mIsCancelNotification;
 
   @Override
   protected void onCreate(Bundle savedInstanceState) {
@@ -298,17 +299,22 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
   }
 
   @Override
-  public void onPauseClick() {
+  public void onPauseClick(boolean isCancel) {
     mExoController.pause();
     setUpVisibilityPausePlay(View.VISIBLE, View.INVISIBLE, View.INVISIBLE);
     mNotificationUtils.updateNotification(NOTIFICATION_ID, Constants.NOTIFICATION_ACTION.PAUSE);
+    mIsCancelNotification = isCancel;
   }
 
   @Override
   public void onPlayClick() {
     mExoController.resume();
     setUpVisibilityPausePlay(View.INVISIBLE, View.VISIBLE, View.INVISIBLE);
-    mNotificationUtils.updateNotification(NOTIFICATION_ID, Constants.NOTIFICATION_ACTION.PLAY);
+    if (mIsCancelNotification) {
+      mNotificationUtils.createMediaCustomNotification(NOTIFICATION_ID, CHANNEL_ID);
+      mIsCancelNotification = false;
+    } else
+      mNotificationUtils.updateNotification(NOTIFICATION_ID, Constants.NOTIFICATION_ACTION.PLAY);
   }
 
   @Override

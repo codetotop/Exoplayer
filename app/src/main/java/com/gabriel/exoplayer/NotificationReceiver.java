@@ -33,7 +33,7 @@ public class NotificationReceiver extends BroadcastReceiver {
         mListener.onPlayClick();
         break;
       case Constants.NOTIFICATION_ACTION.PAUSE:
-        mListener.onPauseClick();
+        mListener.onPauseClick(false);
         break;
       case Constants.NOTIFICATION_ACTION.RE_PLAY:
         mListener.onRePlayClick();
@@ -46,12 +46,13 @@ public class NotificationReceiver extends BroadcastReceiver {
         } else {
           nMgr.cancel(notificationID);
         }
+        mListener.onPauseClick(true);
         break;
     }
   }
 
   public interface NotificationListener {
-    void onPauseClick();
+    void onPauseClick(boolean isCancel);
 
     void onPlayClick();
 
