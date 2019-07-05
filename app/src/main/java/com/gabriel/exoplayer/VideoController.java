@@ -29,7 +29,7 @@ import com.google.android.exoplayer2.text.TextOutput;
 import com.google.android.exoplayer2.trackselection.AdaptiveTrackSelection;
 import com.google.android.exoplayer2.trackselection.DefaultTrackSelector;
 import com.google.android.exoplayer2.trackselection.TrackSelection;
-import com.google.android.exoplayer2.ui.SimpleExoPlayerView;
+import com.google.android.exoplayer2.ui.PlayerView;
 import com.google.android.exoplayer2.ui.SubtitleView;
 import com.google.android.exoplayer2.upstream.BandwidthMeter;
 import com.google.android.exoplayer2.upstream.DataSource;
@@ -47,7 +47,7 @@ public class VideoController {
   private static final int UPDATE_PROGRESS_INTERVAL = 1000;
 
   private Context mContext;
-  private SimpleExoPlayerView mVideoView;
+  private PlayerView mVideoView;
   private SimpleExoPlayer mVideoPlayer;
   private DataSource.Factory mMediaDataSourceFactory;
   private DefaultTrackSelector mTrackSelector;
@@ -77,7 +77,7 @@ public class VideoController {
     }
   };
 
-  public VideoController(Context context, SimpleExoPlayerView videoView) {
+  public VideoController(Context context, PlayerView videoView) {
     mContext = context;
     mVideoView = videoView;
     mUserAgent = Util.getUserAgent(context, "Lingo");
@@ -198,7 +198,7 @@ public class VideoController {
     TrackSelection.Factory videoTrackSelectionFactory = new AdaptiveTrackSelection.Factory(bandwidthMeter);
     mTrackSelector =
         new DefaultTrackSelector(videoTrackSelectionFactory);
-    mTrackSelector.setParameters(mTrackSelector.getParameters().withMaxVideoSize(3086, 2160));
+    //mTrackSelector.setParameters(mTrackSelector.getParameters().withMaxVideoSize(3086, 2160));
     mMediaDataSourceFactory = new DefaultDataSourceFactory(mContext, mUserAgent, (DefaultBandwidthMeter) bandwidthMeter);
   }
 

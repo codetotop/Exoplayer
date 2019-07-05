@@ -16,7 +16,7 @@ import android.widget.SeekBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.google.android.exoplayer2.ui.SimpleExoPlayerView;
+import com.google.android.exoplayer2.ui.PlayerView;
 import com.google.android.exoplayer2.ui.SubtitleView;
 
 import java.text.DecimalFormat;
@@ -29,10 +29,11 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
   private static final int PORTRAIT = 1;
 
   private ConstraintLayout rootPlayer;
-  private SimpleExoPlayerView exoPlayer;
+  public static final Integer NOTIFICATION_ID = 6;
   private ProgressBar progressBar;
   private ImageView ivFullScreen;
   public static final String CHANNEL_ID = "Gabriel";
+  private PlayerView exoPlayer;
   private SeekBar mSbSpeed;
   private SubtitleView mSubtitles;
   private ImageButton mExoPrev, mExoNext, mExoPlay, mExoPause, mExoReplay, mExoReplay10, mExoForward10;
@@ -45,13 +46,19 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
   NotificationUtils mNotificationUtils;
   private String subTitleURL = "https://www.iandevlin.com/html5test/webvtt/upc-video-subtitles-en.vtt";
   private ConstraintLayout mPlaybackContainer;
+  private NotificationReceiver mNotificationReceiver;
 
   @Override
   protected void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
     setContentView(R.layout.activity_main);
-    NotificationReceiver receiver = new NotificationReceiver(this);
-    registerReceiver(receiver, new IntentFilter());
+    mNotificationReceiver = new NotificationReceiver(this);
+    IntentFilter intentFilter = new IntentFilter();
+    intentFilter.addAction(Constants.NOTIFICATION_ACTION.PLAY);
+    intentFilter.addAction(Constants.NOTIFICATION_ACTION.PAUSE);
+    intentFilter.addAction(Constants.NOTIFICATION_ACTION.RE_PLAY);
+    intentFilter.addAction(Constants.NOTIFICATION_ACTION.CANCEL_NOTIFICATION);
+    registerReceiver(mNotificationReceiver, intentFilter);
     addControlls();
     addEvents();
     playingVideo();
@@ -60,7 +67,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
   private void playingVideo() {
     mExoController.playVideo(mLinks.get(mIndexVideo), subTitleURL, 0, mSubtitles);
     mNotificationUtils = new NotificationUtils(this);
-    mNotificationUtils.createMediaCustomNotification(CHANNEL_ID);
+    mNotificationUtils.createMediaCustomNotification(NOTIFICATION_ID, CHANNEL_ID);
   }
 
 
@@ -162,6 +169,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
       @Override
       public void onPlayerFinish() {
         setUpVisibilityPausePlay(View.INVISIBLE, View.INVISIBLE, View.VISIBLE);
+        mNotificationUtils.updateNotification(NOTIFICATION_ID, Constants.NOTIFICATION_ACTION.FINISH);
       }
 
       @Override
@@ -203,6 +211,10 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
       mExoController.releasePlayer();
       mExoController = null;
     }
+    if (mNotificationReceiver != null) {
+      unregisterReceiver(mNotificationReceiver);
+      mNotificationReceiver = null;
+    }
     super.onDestroy();
   }
 
@@ -215,12 +227,14 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
   public void onClick(View v) {
     switch (v.getId()) {
       case R.id.exo_play1:
-        setUpVisibilityPausePlay(View.INVISIBLE, View.VISIBLE, View.INVISIBLE);
         mExoController.resume();
+        mNotificationUtils.updateNotification(NOTIFICATION_ID, Constants.NOTIFICATION_ACTION.PLAY);
+        setUpVisibilityPausePlay(View.INVISIBLE, View.VISIBLE, View.INVISIBLE);
         break;
       case R.id.exo_pause1:
-        setUpVisibilityPausePlay(View.VISIBLE, View.INVISIBLE, View.INVISIBLE);
         mExoController.pause();
+        mNotificationUtils.updateNotification(NOTIFICATION_ID, Constants.NOTIFICATION_ACTION.PAUSE);
+        setUpVisibilityPausePlay(View.VISIBLE, View.INVISIBLE, View.INVISIBLE);
         break;
       case R.id.ivFullScreen:
         setUpFullScreen();
@@ -234,25 +248,28 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         playingVideo();
         break;
       case R.id.exo_replay:
-        setUpVisibilityPausePlay(View.INVISIBLE, View.VISIBLE, View.INVISIBLE);
         mExoController.restart(mLinks.get(mIndexVideo), subTitleURL);
+        setUpVisibilityPausePlay(View.INVISIBLE, View.VISIBLE, View.INVISIBLE);
+        mNotificationUtils.updateNotification(NOTIFICATION_ID, Constants.NOTIFICATION_ACTION.RE_PLAY);
         break;
       case R.id.exo_replay_10:
-
         if (mExoController.getCurrentPosition() > 10000) {
           mExoController.seekTo(mExoController.getCurrentPosition() - 10000);
         } else {
           mExoController.seekTo(0);
         }
         setUpVisibilityPausePlay(View.INVISIBLE, View.VISIBLE, View.INVISIBLE);
+        mNotificationUtils.updateNotification(NOTIFICATION_ID, Constants.NOTIFICATION_ACTION.PLAY);
         break;
       case R.id.exo_forward_10:
         if (mExoController.getCurrentPosition() < mExoController.getDuration() - 10000) {
           mExoController.seekTo(mExoController.getCurrentPosition() + 10000);
           setUpVisibilityPausePlay(View.INVISIBLE, View.VISIBLE, View.INVISIBLE);
+          mNotificationUtils.updateNotification(NOTIFICATION_ID, Constants.NOTIFICATION_ACTION.PLAY);
         } else {
           mExoController.seekTo(mExoController.getDuration());
           setUpVisibilityPausePlay(View.INVISIBLE, View.INVISIBLE, View.VISIBLE);
+          mNotificationUtils.updateNotification(NOTIFICATION_ID, Constants.NOTIFICATION_ACTION.PAUSE);
         }
         break;
       case R.id.tvSpeed1:
@@ -281,11 +298,23 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
   }
 
   @Override
-  public void onPausePlay() {
-    if (mExoController.isPlaying()) {
-      mExoController.pause();
-    } else {
-      mExoController.resume();
-    }
+  public void onPauseClick() {
+    mExoController.pause();
+    setUpVisibilityPausePlay(View.VISIBLE, View.INVISIBLE, View.INVISIBLE);
+    mNotificationUtils.updateNotification(NOTIFICATION_ID, Constants.NOTIFICATION_ACTION.PAUSE);
+  }
+
+  @Override
+  public void onPlayClick() {
+    mExoController.resume();
+    setUpVisibilityPausePlay(View.INVISIBLE, View.VISIBLE, View.INVISIBLE);
+    mNotificationUtils.updateNotification(NOTIFICATION_ID, Constants.NOTIFICATION_ACTION.PLAY);
+  }
+
+  @Override
+  public void onRePlayClick() {
+    mExoController.restart(mLinks.get(mIndexVideo), subTitleURL);
+    setUpVisibilityPausePlay(View.INVISIBLE, View.VISIBLE, View.INVISIBLE);
+    mNotificationUtils.updateNotification(NOTIFICATION_ID, Constants.NOTIFICATION_ACTION.RE_PLAY);
   }
 }

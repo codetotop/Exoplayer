@@ -94,9 +94,8 @@
 
     <ImageButton
         android:id="@+id/exo_replay"
-        style="@style/ExoMediaButton.Pause"
+        style="@style/ExoMediaButton.Play"
         android:layout_marginBottom="15dp"
-        android:src="@drawable/ic_replay"
         android:visibility="invisible"
         app:layout_constraintBottom_toTopOf="@+id/exo_position"
         app:layout_constraintLeft_toLeftOf="parent"

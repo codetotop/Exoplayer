@@ -16,7 +16,7 @@
             android:ellipsize="end"
             android:fontFamily="monospace"
             android:maxLines="4"
-            android:text="Session 1: Introduction to android programming asdsadasdasdasdasdasdsadsad asdasdasdasdasdasdas adsadasdsadsadsa adsad"
+            android:text="Session 1: Introduction to android programming asdasdasdasdasdasdas adsadasdsadsadsa adsad"
             android:textColor="@android:color/black" />
 
         <RelativeLayout
@@ -27,7 +27,7 @@
                 android:id="@+id/imgPlayPause"
                 android:layout_width="36dp"
                 android:layout_height="36dp"
-                android:layout_alignParentStart="true"
+                android:layout_centerInParent="true"
                 android:layout_alignParentTop="true"
                 android:paddingTop="8dp"
                 android:paddingEnd="8dp"

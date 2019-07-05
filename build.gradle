@@ -29,7 +29,7 @@ ext {
     buildToolsVersion = "28.0.3"
     supportLibVersion = "28.0.0"
     retrofitVersion = "2.3.0"
-    exoPlayerVersion = "2.6.0"
+    exoPlayerVersion = "2.9.6"
 }
 
 task clean(type: Delete) {

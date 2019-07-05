@@ -4,10 +4,13 @@ import android.app.NotificationManager;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
-import android.widget.Toast;
+import android.os.Build;
 
 public class NotificationReceiver extends BroadcastReceiver {
   private NotificationListener mListener;
+
+  public NotificationReceiver() {
+  }
 
   public NotificationReceiver(NotificationListener listener) {
     mListener = listener;
@@ -23,22 +26,35 @@ public class NotificationReceiver extends BroadcastReceiver {
 
   @Override
   public void onReceive(Context context, Intent intent) {
+    String actionID = intent.getAction();
 
-    int id = intent.getIntExtra(Constant.BUTTON_CLICKED, -1);
-    switch (id) {
-      case R.id.imgPlayPause:
-        mListener.onPausePlay();
+    switch (actionID) {
+      case Constants.NOTIFICATION_ACTION.PLAY:
+        mListener.onPlayClick();
         break;
-      case R.id.imgCloseNotification:
-        NotificationManager nMgr = (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
-        nMgr.cancel(6);
-        Toast.makeText(context, "Accepted", Toast.LENGTH_SHORT).show();
+      case Constants.NOTIFICATION_ACTION.PAUSE:
+        mListener.onPauseClick();
         break;
-
+      case Constants.NOTIFICATION_ACTION.RE_PLAY:
+        mListener.onRePlayClick();
+        break;
+      case Constants.NOTIFICATION_ACTION.CANCEL_NOTIFICATION:
+        Integer notificationID = intent.getIntExtra(Constants.NOTIFICATION_ID, 6);
+        NotificationManager nMgr = (NotificationManager) context.getApplicationContext().getSystemService(Context.NOTIFICATION_SERVICE);
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+          nMgr.deleteNotificationChannel(MainActivity.CHANNEL_ID);
+        } else {
+          nMgr.cancel(notificationID);
+        }
+        break;
     }
   }
 
   public interface NotificationListener {
-    void onPausePlay();
+    void onPauseClick();
+
+    void onPlayClick();
+
+    void onRePlayClick();
   }
 }
