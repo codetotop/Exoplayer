@@ -147,6 +147,7 @@
         android:id="@+id/subtitle"
         android:layout_width="0dp"
         android:layout_height="40dp"
+        android:visibility="gone"
         android:background="@color/transparent"
         app:layout_constraintBottom_toTopOf="@id/exo_progress"
         app:layout_constraintEnd_toEndOf="parent"
