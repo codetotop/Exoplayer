@@ -29,9 +29,9 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
   private static final int PORTRAIT = 1;
 
   private ConstraintLayout rootPlayer;
-  public static final Integer NOTIFICATION_ID = 6;
   private ProgressBar progressBar;
   private ImageView ivFullScreen;
+  public static final Integer NOTIFICATION_ID = 6;
   public static final String CHANNEL_ID = "Gabriel";
   private PlayerView exoPlayer;
   private SeekBar mSbSpeed;
@@ -126,7 +126,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         DecimalFormat format = new DecimalFormat("#.#");
         mTvSpeed1.setText("x" + format.format(speed));
         mTvSpeed2.setText("x" + format.format(speed));
-        mExoController.setSpeed(speed, speed);
+        mExoController.setSpeed(speed);
       }
 
       @Override

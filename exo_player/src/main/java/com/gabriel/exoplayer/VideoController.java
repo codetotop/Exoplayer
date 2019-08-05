@@ -84,9 +84,9 @@ public class VideoController {
     init();
   }
 
-  public void setSpeed(float speed, float pitch) {
+  public void setSpeed(float speed) {
     if (mVideoPlayer != null) {
-      PlaybackParameters param = new PlaybackParameters(speed, pitch);
+      PlaybackParameters param = new PlaybackParameters(speed);
       mVideoPlayer.setPlaybackParameters(param);
     }
   }
